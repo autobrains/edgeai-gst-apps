@@ -336,6 +336,41 @@ setup_USB_camera(){
     fi
 }
 
+setup_imx728(){
+    IMX728_CAM_FMT='[fmt:SRGGB12_1X12/3856x2176]'
+
+    insmod /opt/edgeai-gst-apps/imx728.ko
+
+    count=0
+    for media_id in {0..1}; do
+    for name in `media-ctl -d $media_id -p | grep entity | grep imx728 | cut -d ' ' -f 5`; do
+        CAM_SUBDEV=`media-ctl -d $media_id -p -e "imx728 $name" | grep v4l-subdev | awk '{print $4}'`
+        media-ctl -v -d $media_id --set-v4l2 ''"\"imx728 $name\""':0 '$IMX728_CAM_FMT''
+
+        CSI_BRIDGE_NAME=`media-ctl -d $media_id -p -e "imx728 $name" | grep csi-bridge | cut -d "\"" -f 2`
+        CSI2RX_NAME=`media-ctl -d $media_id -p -e "$CSI_BRIDGE_NAME" | grep "ticsi2rx\"" | cut -d "\"" -f 2`
+        CSI2RX_CONTEXT_NAME="$CSI2RX_NAME context 0"
+
+        CAM_DEV=`media-ctl -d $media_id -p -e "$CSI2RX_CONTEXT_NAME" | grep video | awk '{print $4}'`
+        CAM_DEV_NAME=/dev/video-rpi-cam$count
+
+        CAM_SUBDEV_NAME=/dev/v4l-rpi-subdev$count
+
+        ln -snf $CAM_DEV $CAM_DEV_NAME
+        ln -snf $CAM_SUBDEV $CAM_SUBDEV_NAME
+
+        echo -e "${GREEN}CSI Camera $media_id detected${NOCOLOR}"
+        echo "    device = $CAM_DEV_NAME"
+        echo "    name = imx728"
+        echo "    format = $IMX728_CAM_FMT"
+        echo "    subdev_id = $CAM_SUBDEV_NAME"
+        echo "    isp_required = yes"
+        count=$(($count + 1))
+    done
+    done
+}
+
+setup_imx728
 setup_USB_camera
 setup_imx219
 setup_ov5640

@@ -33,10 +33,30 @@
 GREEN='\033[0;32m'
 NOCOLOR='\033[0m'
 
+
 setup_imx728(){
+
+    gpioset gpiochip2 7=0
+    gpioset gpiochip2 10=0
+    gpioset gpiochip1 90=0
+
+    sleep 1
+
+    gpioset gpiochip2 7=1
+    gpioset gpiochip2 10=1
+    gpioset gpiochip1 89=0
+    sleep 0.01
+
+    gpioset gpiochip1 90=1
+
+    sleep 1
+
     IMX728_CAM_FMT='[fmt:SRGGB12_1X12/3856x2176]'
 
     insmod /opt/edgeai-gst-apps/imx728.ko
+
+    sleep 1
+    echo 0 > /sys/module/imx728/parameters/use_sf811_config
 
     count=0
     for media_id in {0..1}; do
@@ -66,5 +86,6 @@ setup_imx728(){
     done
     done
 }
+
 
 setup_imx728
